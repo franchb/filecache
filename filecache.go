@@ -31,11 +31,14 @@ func New(targetDir string, options ...InstanceOptions) (FileCache, error) {
 	}
 
 	fc := &fileCache{
-		dir:           targetDir,
-		ttlDefault:    TTLEternal,
-		pathGenerator: HashedKeySplitPath,
-		gc:            NewProbabilityGarbageCollector(targetDir, 1, 100),
-		keysLocker:    newKeysLocker(),
+		dir:            targetDir,
+		ttlDefault:     TTLEternal,
+		pathGenerator:  HashedKeySplitPath,
+		gc:             NewProbabilityGarbageCollector(targetDir, 1, 100),
+		keysLocker:     newKeysLocker(),
+		gcOnInvalidate: true,
+		gcOnRead:       true,
+		gcOnWrite:      true,
 	}
 
 	if len(options) == 1 {
@@ -51,6 +54,15 @@ func New(targetDir string, options ...InstanceOptions) (FileCache, error) {
 
 		if options[0].PathGenerator != nil {
 			fc.pathGenerator = options[0].PathGenerator
+		}
+		if options[0].DisableGCOnInvalidate {
+			fc.gcOnInvalidate = false
+		}
+		if options[0].DisableGCOnWrite {
+			fc.gcOnWrite = false
+		}
+		if options[0].DisableGCOnRead {
+			fc.gcOnRead = false
 		}
 	}
 
@@ -101,6 +113,10 @@ type fileCache struct {
 	gc            GarbageCollector
 
 	keysLocker *keysLocker
+
+	gcOnInvalidate bool
+	gcOnWrite      bool
+	gcOnRead       bool
 }
 
 func (fc *fileCache) GetPath() string {
@@ -118,9 +134,11 @@ func (fc *fileCache) Write(
 		return 0, err
 	}
 
-	defer func() {
-		go fc.gc.OnOperation()
-	}()
+	if fc.gcOnWrite {
+		defer func() {
+			go fc.gc.OnOperation()
+		}()
+	}
 
 	opt := ItemOptions{}
 
@@ -196,9 +214,11 @@ func (fc *fileCache) Open(ctx context.Context, key string) (result *OpenResult, 
 		return nil, err
 	}
 
-	defer func() {
-		go fc.gc.OnOperation()
-	}()
+	if fc.gcOnRead {
+		defer func() {
+			go fc.gc.OnOperation()
+		}()
+	}
 
 	result = &OpenResult{}
 
@@ -245,9 +265,12 @@ func (fc *fileCache) Read(ctx context.Context, key string) (result *ReadResult, 
 		return nil, err
 	}
 
-	defer func() {
-		go fc.gc.OnOperation()
-	}()
+	if fc.gcOnRead {
+		defer func() {
+			go fc.gc.OnOperation()
+		}()
+
+	}
 
 	itemPath := fc.getItemPath(key, false, false)
 	metaPath := fc.getItemPath(key, true, false)
@@ -282,9 +305,11 @@ func (fc *fileCache) Invalidate(ctx context.Context, key string) error {
 		return err
 	}
 
-	defer func() {
-		go fc.gc.OnOperation()
-	}()
+	if fc.gcOnInvalidate {
+		defer func() {
+			go fc.gc.OnOperation()
+		}()
+	}
 
 	fc.keysLocker.lock(key)
 	defer fc.keysLocker.unlock(key)
