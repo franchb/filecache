@@ -31,6 +31,10 @@ type InstanceOptions struct {
 	//
 	// Deprecated: use the GC property instead.
 	GCDivisor uint
+
+	DisableGCOnInvalidate bool
+	DisableGCOnWrite      bool
+	DisableGCOnRead       bool
 }
 
 // ItemOptions are a cache item options.
