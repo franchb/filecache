@@ -14,7 +14,10 @@ const (
 	TTLEternal = time.Duration(-1)
 )
 
-// New creates a new FileCache instance with a specified target dir & options.
+// New creates a new FileCache instance using the specified directory and optional configuration.
+// The cache supports TTL, garbage collection, and customizable path generation. If no directory is provided, the system temporary directory is used.
+// Only one InstanceOptions parameter is allowed; additional options are ignored with an error.
+// Returns the configured FileCache or an error if initialization fails.
 func New(targetDir string, options ...InstanceOptions) (FileCache, error) {
 	if len(options) > 1 {
 		return nil, fmt.Errorf("more than one instance options param behavior is not supported")
