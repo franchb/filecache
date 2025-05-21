@@ -1,6 +1,9 @@
 package filecache
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // InstanceOptions are a cache instance options.
 type InstanceOptions struct {
@@ -47,4 +50,7 @@ type ItemOptions struct {
 
 	// Fields is a map of any other metadata fields.
 	Fields Values
+
+	// Custom metadata of any custom type.
+	Metadata json.RawMessage
 }

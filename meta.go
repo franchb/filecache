@@ -54,14 +54,16 @@ func newMeta(key string, options *ItemOptions, defaultTTL time.Duration) *meta {
 		Name:      options.Name,
 		TTL:       ttl,
 		Fields:    options.Fields,
+		Metadata:  options.Metadata,
 	}
 }
 
 func metaToOptions(meta *meta) *ItemOptions {
 	return &ItemOptions{
-		Name:   meta.Name,
-		TTL:    meta.TTL,
-		Fields: meta.Fields,
+		Name:     meta.Name,
+		TTL:      meta.TTL,
+		Fields:   meta.Fields,
+		Metadata: meta.Metadata,
 	}
 }
 
@@ -81,6 +83,9 @@ type meta struct {
 
 	// Fields is a map of any other metadata fields.
 	Fields Values `json:"f,omitempty"`
+
+	// Custom metadata of any custom type.
+	Metadata json.RawMessage `json:"m,omitempty"`
 }
 
 func (m *meta) isExpired() bool {
